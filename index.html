@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <title>Awesome Side Scroller</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+      }
+
+      canvas {
+        background: #eee;
+        display: block;
+        margin: 0 auto;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="game-canvas" width="1000" height="1000"></canvas>
+
+    <script>
+      const canvas = document.getElementById("game-canvas");
+      const ctx = canvas.getContext("2d");
+      const bullets = [];
+      const enemies = [];
+      const enemySpawnInterval = 2000;
+      let lastEnemySpawnTime = 0;
+
+      let spaceShipCoordinates = { x: 100, y: 500 };
+
+      window.addEventListener("keydown", handleKeydown);
+      
+      function handleKeydown(event) {
+        switch (event.code) {
+          case "KeyA":
+            spaceShipCoordinates.x -= 10;
+            break;
+          case "KeyD":
+            spaceShipCoordinates.x += 10;
+            break;
+          case "KeyW":
+            spaceShipCoordinates.y -= 10;
+            break;
+          case "KeyS":
+            spaceShipCoordinates.y += 10;
+            break;
+          case "Space":
+            shoot();
+            break;
+          default:
+            break;
+        }
+      }
+
+      function shoot() {
+        bullets.push({ x: spaceShipCoordinates.x, y: spaceShipCoordinates.y });
+      }
+
+      function drawSpaceShip() {
+        const { x, y } = spaceShipCoordinates;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x - 20, y - 5);
+        ctx.lineTo(x - 20, y + 5);
+        ctx.lineTo(x, y);
+        ctx.fill();
+        ctx.closePath();
+      }
+
+      function drawBullet(bullet) {
+        ctx.beginPath();
+        ctx.arc(bullet.x, bullet.y, 1, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      function drawEnemy(enemy) {
+        ctx.beginPath();
+        ctx.arc(enemy.x, enemy.y, 10, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      function draw(timestamp) {
+        ctx.clearRect(0, 0, 1000, 1000);
+        if (timestamp - lastEnemySpawnTime > enemySpawnInterval) {
+          lastEnemySpawnTime = timestamp;
+          enemies.push({ x: 800, y: 200 });
+        }
+        drawSpaceShip();
+        
+        for (enemy of enemies) {
+          drawEnemy(enemy);
+          enemy.x -= 1;
+
+          if (enemy.x < 0) {
+            enemies.splice(enemies.indexOf(enemy), 1);
+          }
+        }
+
+        for (bullet of bullets) {
+          drawBullet(bullet);
+          bullet.x += 10;
+
+          if (bullet.x > 1000) {
+            bullets.splice(bullets.indexOf(bullet), 1);
+          }
+        }
+        requestAnimationFrame(draw);
+      }
+
+      requestAnimationFrame(draw);
+    </script>
+  </body>
+</html>
