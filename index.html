@@ -1,7 +1,7 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en-US">
   <head>
-    <meta charset="utf-8">
+    <meta charset="utf-8" />
     <title>Awesome Side Scroller</title>
     <style>
       * {
@@ -27,26 +27,38 @@
       const enemySpawnInterval = 2000;
       let lastEnemySpawnTime = 0;
 
-      let spaceShipCoordinates = { x: 100, y: 500 };
+      const spaceShipSize = 20;
+      const enemySize = 20;
+      const bulletSize = 2;
+      let spaceShipCoordinates = { x: 100, y: 300 };
+      let gameOver = false;
+      let health = 3;
 
       window.addEventListener("keydown", handleKeydown);
-      
+
       function handleKeydown(event) {
         switch (event.code) {
           case "KeyA":
+          case "ArrowLeft":
             spaceShipCoordinates.x -= 10;
             break;
           case "KeyD":
+          case "ArrowRight":
             spaceShipCoordinates.x += 10;
             break;
           case "KeyW":
+          case "ArrowUp":
             spaceShipCoordinates.y -= 10;
             break;
           case "KeyS":
+          case "ArrowDown":
             spaceShipCoordinates.y += 10;
             break;
           case "Space":
             shoot();
+            break;
+          case "KeyR":
+            resetGame();
             break;
           default:
             break;
@@ -80,6 +92,28 @@
         ctx.fill();
       }
 
+      function drawHealth() {
+        const healthStartX = 20;
+        const healthStartY = 20;
+        const healthRadius = 10;
+        const healthSpacing = 30;
+
+        for (let i = 0; i < health; i++) {
+          ctx.beginPath();
+          ctx.arc(
+            healthStartX + i * healthSpacing,
+            healthStartY,
+            healthRadius,
+            0,
+            Math.PI * 2
+          );
+          // TODO - current paints EVERYTHING red
+          // ctx.fillStyle = "red";
+          ctx.fill();
+          ctx.closePath();
+        }
+      }
+
       function draw(timestamp) {
         ctx.clearRect(0, 0, 1000, 1000);
         if (timestamp - lastEnemySpawnTime > enemySpawnInterval) {
@@ -87,13 +121,52 @@
           enemies.push({ x: 800, y: 200 });
         }
         drawSpaceShip();
-        
+        drawHealth();
+
+        const spaceShipRect = {
+          x: spaceShipCoordinates.x - spaceShipSize / 2,
+          y: spaceShipCoordinates.y - spaceShipSize / 2,
+          width: spaceShipSize,
+          height: spaceShipSize,
+        };
+
+        let collisionDetected = false;
+
         for (enemy of enemies) {
           drawEnemy(enemy);
           enemy.x -= 1;
 
           if (enemy.x < 0) {
             enemies.splice(enemies.indexOf(enemy), 1);
+          }
+
+          const enemyRect = {
+            x: enemy.x - enemySize / 2,
+            y: enemy.y - enemySize / 2,
+            width: enemySize,
+            height: enemySize,
+          };
+
+          if (
+            detectCollision(
+              spaceShipCoordinates.x,
+              spaceShipCoordinates.y,
+              spaceShipSize,
+              enemyRect
+            )
+          ) {
+            console.log("Collision between player and enemy!");
+            health -= 1;
+
+            if (!collisionDetected) {
+              health -= 1;
+              if (health <= 0) {
+                // gameOver = true;
+                console.log("Game Over!");
+              }
+              collisionDetected = true;
+            }
+            break;
           }
         }
 
@@ -104,8 +177,55 @@
           if (bullet.x > 1000) {
             bullets.splice(bullets.indexOf(bullet), 1);
           }
+
+          const bulletRect = {
+            x: enemy.x - bulletSize / 2,
+            y: enemy.y - bulletSize / 2,
+            width: bulletSize,
+            height: bulletSize,
+          };
+
+          for (const enemy of enemies) {
+            const enemyRect = {
+              x: enemy.x - enemySize / 2,
+              y: enemy.y - enemySize / 2,
+              width: enemySize,
+              height: enemySize,
+            };
+
+            if (detectCollision(bullet.x, bullet.y, bulletSize, enemyRect)) {
+              bullets.splice(bullets.indexOf(bullet), 1);
+              enemies.splice(enemies.indexOf(enemy), 1);
+              console.log("Collision between bullet and enemy!");
+              break;
+            }
+          }
         }
+        if (!gameOver) {
+          requestAnimationFrame(draw);
+        }
+      }
+
+      function isPointInsideRectangle(px, py, rect) {
+        return (
+          px >= rect.x &&
+          px <= rect.x + rect.width &&
+          py >= rect.y &&
+          py <= rect.y + rect.height
+        );
+      }
+
+      function detectCollision(px, py, size, rect) {
+        return isPointInsideRectangle(px, py, rect);
+      }
+
+      function resetGame() {
+        bullets.length = 0;
+        enemies.length = 0;
+        spaceShipCoordinates = { x: 100, y: 300 };
+        gameOver = false;
         requestAnimationFrame(draw);
+        console.log("Game has been reset.");
       }
 
       requestAnimationFrame(draw);
