@@ -33,6 +33,7 @@
       let spaceShipCoordinates = { x: 100, y: 300 };
       let gameOver = false;
       let health = 3;
+      let collisionDetected = false;
 
       window.addEventListener("keydown", handleKeydown);
 
@@ -76,6 +77,7 @@
         ctx.lineTo(x - 20, y - 5);
         ctx.lineTo(x - 20, y + 5);
         ctx.lineTo(x, y);
+        ctx.fillStyle = "purple";
         ctx.fill();
         ctx.closePath();
       }
@@ -83,12 +85,14 @@
       function drawBullet(bullet) {
         ctx.beginPath();
         ctx.arc(bullet.x, bullet.y, 1, 0, Math.PI * 2);
+        ctx.fillStyle = "black";
         ctx.fill();
       }
 
       function drawEnemy(enemy) {
         ctx.beginPath();
         ctx.arc(enemy.x, enemy.y, 10, 0, Math.PI * 2);
+        ctx.fillStyle = "green";
         ctx.fill();
       }
 
@@ -108,7 +112,7 @@
             Math.PI * 2
           );
           // TODO - current paints EVERYTHING red
-          // ctx.fillStyle = "red";
+          ctx.fillStyle = "red";
           ctx.fill();
           ctx.closePath();
         }
@@ -129,8 +133,6 @@
           width: spaceShipSize,
           height: spaceShipSize,
         };
-
-        let collisionDetected = false;
 
         for (enemy of enemies) {
           drawEnemy(enemy);
@@ -157,15 +159,13 @@
           ) {
             console.log("Collision between player and enemy!");
             health -= 1;
+            enemies.splice(enemies.indexOf(enemy), 1);
 
-            if (!collisionDetected) {
-              health -= 1;
-              if (health <= 0) {
-                // gameOver = true;
-                console.log("Game Over!");
-              }
-              collisionDetected = true;
+            if (health <= 0) {
+              gameOver = true;
+              console.log("Game Over!");
             }
+
             break;
           }
         }
