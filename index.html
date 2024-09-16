@@ -24,7 +24,7 @@
       const ctx = canvas.getContext("2d");
       const bullets = [];
       const enemies = [];
-      const enemySpawnInterval = 1000;
+      const enemySpawnInterval = 50;
       let lastEnemySpawnTime = 0;
 
       const spaceShipSize = 100;
@@ -40,6 +40,7 @@
       let isMousePressed = false;
       const fireRate = 40;
       let lastFireTime = 0;
+      let kills = 0;
 
       window.addEventListener("keydown", (e) => (keysPressed[e.code] = true));
       window.addEventListener("keyup", (e) => (keysPressed[e.code] = false));
@@ -59,6 +60,9 @@
         }
         if (keysPressed["KeyS"] || keysPressed["ArrowDown"]) {
           spaceShipCoordinates.y += moveSpeed;
+        }
+        if (keysPressed["KeyR"]) {
+          resetGame();
         }
       }
 
@@ -176,6 +180,12 @@
         }
       }
 
+      function drawKills() {
+        ctx.font = "30px Arial";
+        ctx.fillStyle = "black";
+        ctx.fillText(`Kills: ${kills}`, canvas.width - 150, 50);
+      }
+
       function draw(timestamp) {
         ctx.clearRect(0, 0, 1000, 1000);
         if (timestamp - lastEnemySpawnTime > enemySpawnInterval) {
@@ -197,6 +207,7 @@
         updateMovement();
         drawSpaceShip();
         drawHealth();
+        drawKills();
 
         const spaceShipRect = {
           x: spaceShipCoordinates.x - spaceShipSize / 2,
@@ -228,13 +239,11 @@
               enemyRect
             )
           ) {
-            console.log("Collision between player and enemy!");
             health -= 1;
             enemies.splice(enemies.indexOf(enemy), 1);
 
             if (health <= 0) {
               gameOver = true;
-              console.log("Game Over!");
             }
 
             break;
@@ -267,7 +276,7 @@
             if (detectCollision(bullet.x, bullet.y, bulletSize, enemyRect)) {
               bullets.splice(bullets.indexOf(bullet), 1);
               enemies.splice(enemies.indexOf(enemy), 1);
-              console.log("Collision between bullet and enemy!");
+              kills++;
               break;
             }
           }
@@ -301,8 +310,8 @@
         enemies.length = 0;
         spaceShipCoordinates = { x: 100, y: 300 };
         gameOver = false;
+        kills = 0;
         requestAnimationFrame(draw);
-        console.log("Game has been reset.");
       }
 
       requestAnimationFrame(draw);
