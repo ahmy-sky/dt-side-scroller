@@ -31,11 +31,15 @@
       const enemySize = 20;
       const bulletSize = 2;
       let spaceShipCoordinates = { x: 100, y: 300 };
+      let mouseCoordinates = { x: 0, y: 0 };
       let gameOver = false;
       let health = 3;
       let collisionDetected = false;
+      let keysPressed = {};
 
       window.addEventListener("keydown", handleKeydown);
+      window.addEventListener("mousedown", handleMouseClick);
+      window.addEventListener("mousemove", handleMouseMove);
 
       function handleKeydown(event) {
         switch (event.code) {
@@ -66,20 +70,52 @@
         }
       }
 
+      function handleMouseClick(event) {
+        shoot();
+      }
+
+      function handleMouseMove(event) {
+        const rect = canvas.getBoundingClientRect();
+        mouseCoordinates.x = event.clientX - rect.left;
+        mouseCoordinates.y = event.clientY - rect.top;
+      }
+
       function shoot() {
-        bullets.push({ x: spaceShipCoordinates.x, y: spaceShipCoordinates.y });
+        const angle = calculateAngle();
+        const speed = 10;
+
+        bullets.push({
+          x: spaceShipCoordinates.x,
+          y: spaceShipCoordinates.y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+        });
+      }
+
+      function calculateAngle() {
+        const dx = mouseCoordinates.x - spaceShipCoordinates.x;
+        const dy = mouseCoordinates.y - spaceShipCoordinates.y;
+        return Math.atan2(dy, dx);
       }
 
       function drawSpaceShip() {
         const { x, y } = spaceShipCoordinates;
+        const angle = calculateAngle();
+
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(angle);
+
         ctx.beginPath();
-        ctx.moveTo(x, y);
-        ctx.lineTo(x - 20, y - 5);
-        ctx.lineTo(x - 20, y + 5);
-        ctx.lineTo(x, y);
+        ctx.moveTo(0, 0);
+        ctx.lineTo(-20, -5);
+        ctx.lineTo(-20, 5);
+        ctx.lineTo(0, 0);
         ctx.fillStyle = "purple";
         ctx.fill();
         ctx.closePath();
+
+        ctx.restore();
       }
 
       function drawBullet(bullet) {
@@ -111,7 +147,6 @@
             0,
             Math.PI * 2
           );
-          // TODO - current paints EVERYTHING red
           ctx.fillStyle = "red";
           ctx.fill();
           ctx.closePath();
@@ -136,7 +171,7 @@
 
         for (enemy of enemies) {
           drawEnemy(enemy);
-          enemy.x -= 1;
+          enemy.x -= 5;
 
           if (enemy.x < 0) {
             enemies.splice(enemies.indexOf(enemy), 1);
@@ -172,18 +207,18 @@
 
         for (bullet of bullets) {
           drawBullet(bullet);
-          bullet.x += 10;
 
-          if (bullet.x > 1000) {
+          bullet.x += bullet.vx;
+          bullet.y += bullet.vy;
+
+          if (
+            bullet.x < 0 ||
+            bullet.x > canvas.width ||
+            bullet.y < 0 ||
+            bullet.y > canvas.height
+          ) {
             bullets.splice(bullets.indexOf(bullet), 1);
           }
-
-          const bulletRect = {
-            x: enemy.x - bulletSize / 2,
-            y: enemy.y - bulletSize / 2,
-            width: bulletSize,
-            height: bulletSize,
-          };
 
           for (const enemy of enemies) {
             const enemyRect = {
