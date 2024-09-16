@@ -36,42 +36,42 @@
       let health = 3;
       let collisionDetected = false;
       let keysPressed = {};
+      const moveSpeed = 5;
+      let isMousePressed = false;
+      const fireRate = 40;
+      let lastFireTime = 0;
 
-      window.addEventListener("keydown", handleKeydown);
-      window.addEventListener("mousedown", handleMouseClick);
+      window.addEventListener("keydown", (e) => (keysPressed[e.code] = true));
+      window.addEventListener("keyup", (e) => (keysPressed[e.code] = false));
+      window.addEventListener("mousedown", handleMouseDown);
+      window.addEventListener("mouseup", handleMouseUp);
       window.addEventListener("mousemove", handleMouseMove);
 
-      function handleKeydown(event) {
-        switch (event.code) {
-          case "KeyA":
-          case "ArrowLeft":
-            spaceShipCoordinates.x -= 10;
-            break;
-          case "KeyD":
-          case "ArrowRight":
-            spaceShipCoordinates.x += 10;
-            break;
-          case "KeyW":
-          case "ArrowUp":
-            spaceShipCoordinates.y -= 10;
-            break;
-          case "KeyS":
-          case "ArrowDown":
-            spaceShipCoordinates.y += 10;
-            break;
-          case "Space":
-            shoot();
-            break;
-          case "KeyR":
-            resetGame();
-            break;
-          default:
-            break;
+      function updateMovement() {
+        if (keysPressed["KeyA"] || keysPressed["ArrowLeft"]) {
+          spaceShipCoordinates.x -= moveSpeed;
+        }
+        if (keysPressed["KeyD"] || keysPressed["ArrowRight"]) {
+          spaceShipCoordinates.x += moveSpeed;
+        }
+        if (keysPressed["KeyW"] || keysPressed["ArrowUp"]) {
+          spaceShipCoordinates.y -= moveSpeed;
+        }
+        if (keysPressed["KeyS"] || keysPressed["ArrowDown"]) {
+          spaceShipCoordinates.y += moveSpeed;
         }
       }
 
       function handleMouseClick(event) {
         shoot();
+      }
+
+      function handleMouseDown(event) {
+        isMousePressed = true;
+      }
+
+      function handleMouseUp(event) {
+        isMousePressed = false;
       }
 
       function handleMouseMove(event) {
@@ -82,13 +82,13 @@
 
       function shoot() {
         const angle = calculateAngle();
-        const speed = 10;
+        const bulletSpeed = 15;
 
         bullets.push({
           x: spaceShipCoordinates.x,
           y: spaceShipCoordinates.y,
-          vx: Math.cos(angle) * speed,
-          vy: Math.sin(angle) * speed,
+          vx: Math.cos(angle) * bulletSpeed,
+          vy: Math.sin(angle) * bulletSpeed,
         });
       }
 
@@ -132,24 +132,47 @@
         ctx.fill();
       }
 
+      function drawHeart(x, y, size) {
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.bezierCurveTo(
+          x,
+          y - size / 2,
+          x - size / 2,
+          y - size / 2,
+          x - size / 2,
+          y
+        );
+        ctx.bezierCurveTo(
+          x - size / 2,
+          y + size / 2,
+          x,
+          y + size / 2,
+          x,
+          y + size
+        );
+        ctx.bezierCurveTo(
+          x,
+          y + size / 2,
+          x + size / 2,
+          y + size / 2,
+          x + size / 2,
+          y
+        );
+        ctx.bezierCurveTo(x + size / 2, y - size / 2, x, y - size / 2, x, y);
+        ctx.fillStyle = "red";
+        ctx.fill();
+        ctx.closePath();
+      }
+
       function drawHealth() {
-        const healthStartX = 20;
-        const healthStartY = 20;
-        const healthRadius = 10;
-        const healthSpacing = 30;
+        const healthStartX = 30;
+        const healthStartY = 40;
+        const heartSize = 30;
+        const healthSpacing = 40;
 
         for (let i = 0; i < health; i++) {
-          ctx.beginPath();
-          ctx.arc(
-            healthStartX + i * healthSpacing,
-            healthStartY,
-            healthRadius,
-            0,
-            Math.PI * 2
-          );
-          ctx.fillStyle = "red";
-          ctx.fill();
-          ctx.closePath();
+          drawHeart(healthStartX + i * healthSpacing, healthStartY, heartSize);
         }
       }
 
@@ -159,6 +182,8 @@
           lastEnemySpawnTime = timestamp;
           enemies.push({ x: 800, y: 200 });
         }
+
+        updateMovement();
         drawSpaceShip();
         drawHealth();
 
@@ -236,6 +261,12 @@
             }
           }
         }
+
+        if (isMousePressed && timestamp - lastFireTime > fireRate) {
+          shoot();
+          lastFireTime = timestamp;
+        }
+
         if (!gameOver) {
           requestAnimationFrame(draw);
         }
