@@ -24,10 +24,10 @@
       const ctx = canvas.getContext("2d");
       const bullets = [];
       const enemies = [];
-      const enemySpawnInterval = 2000;
+      const enemySpawnInterval = 1000;
       let lastEnemySpawnTime = 0;
 
-      const spaceShipSize = 20;
+      const spaceShipSize = 100;
       const enemySize = 20;
       const bulletSize = 2;
       let spaceShipCoordinates = { x: 100, y: 300 };
@@ -180,7 +180,18 @@
         ctx.clearRect(0, 0, 1000, 1000);
         if (timestamp - lastEnemySpawnTime > enemySpawnInterval) {
           lastEnemySpawnTime = timestamp;
-          enemies.push({ x: 800, y: 200 });
+
+          const spawnSide = Math.random() > 0.5 ? "left" : "right";
+          const randomY = Math.random() * canvas.height;
+          const speed = Math.random() * 3 + 2;
+
+          let enemy;
+          if (spawnSide === "left") {
+            enemy = { x: 20, y: randomY, speed: speed };
+          } else {
+            enemy = { x: canvas.width + 20, y: randomY, speed: -speed };
+          }
+          enemies.push(enemy);
         }
 
         updateMovement();
@@ -196,7 +207,7 @@
 
         for (enemy of enemies) {
           drawEnemy(enemy);
-          enemy.x -= 5;
+          enemy.x += enemy.speed;
 
           if (enemy.x < 0) {
             enemies.splice(enemies.indexOf(enemy), 1);
